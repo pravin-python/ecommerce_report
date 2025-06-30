@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <title>{% block title %}{% endblock title %} | E-commerce </title>
+
+{% include 'includes/head.html' %}
+{% block extrastyle %}{% endblock extrastyle %}
+</head>
+<body>
+    {% block pre_loader %}
+        {% include 'includes/pre-loader.html' %}
+    {% endblock pre_loader %}
+    {% include 'includes/message.html' %}
+
+    {% block sidebar %}
+        {% include 'includes/sidebar.html' %}
+    {% endblock sidebar %}
+
+    {% block navigation %}
+        {% include 'includes/navigation.html' %}
+    {% endblock navigation %}
+
+    <section class="pcoded-main-container">
+        <div class="pcoded-content">
+            {% comment %} {% block breadcrumbs %}
+                {% include 'includes/breadcrumbs.html' %}
+            {% endblock breadcrumbs %} {% endcomment %}
+
+            {% block content %}{% endblock content %}
+        </div>
+    </section>
+
+    {% include 'includes/scripts.html' %}
+    {% block extrajs %}{% endblock extrajs %}
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FYFQZT1VY2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-FYFQZT1VY2');
+</script>
+</body>
+</html>

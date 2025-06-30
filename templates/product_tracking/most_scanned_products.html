@@ -1,0 +1,178 @@
+{% extends "layouts/details_base.html" %}
+
+{% load static %}
+
+{% block title %} Most Scanned Products {% endblock title %}
+
+{% block extrastyle %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/css/bootstrap-slider.min.css">
+{% endblock extrastyle %}
+
+
+{% block extra_header_content %}
+<!-- Filters Button -->
+<div class="col-auto m-2px">
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModel">
+        <i class="feather icon-filter me-1"></i>Filters
+    </button>
+</div>
+{% endblock extra_header_content %}
+
+{% block content_table %}
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Product Name</th>
+            <th hscope="col"> Barcode</th>
+            <th scope="col">Score (Grade)</th>
+            <th scope="col">Status</th>
+            <th scope="col">
+                <a href="?order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}&{{query_sort_oder}}">
+                    Count
+                    {% if request.GET.order == 'asc' %}▲{% else %}▼{% endif %}
+                </a>
+            </th>
+        </tr>
+    </thead>
+    <tbody class="table-group-divider">
+        {% for history in page_obj.object_list %}
+        <tr>
+            <td>{{ history.name }}</td>
+            <td>
+                <a href="#" class="text-primary text-decoration-underline"
+                    data-barcode="{{ history.barcode }}"
+                    data-bs-toggle="modal"
+                    data-bs-target="#barcodeModel">
+                    {{ history.barcode }}
+                </a>
+            </td>
+            <td>{{ history.score_in|default:"-" }} {% if history.grade_in %}({{ history.grade_in|default:"-" }}) {% endif %}</td>
+            <td>
+                {% if history.status == 'enable' %}
+                    <span class="badge rounded-pill bg-success">Enabled</span>
+                {% elif history.status == 'disable' %}
+                    <span class="badge rounded-pill bg-danger">Disabled</span>
+                {% elif history.status == 'raw' %}
+                    <span class="badge rounded-pill bg-warning">Raw</span>
+                {% else %}
+                    <span class="badge bg-secondary">Exempted</span>
+                {% endif %}
+            </td>
+            <td>{{ history.scan_count }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No most scanned products found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock content_table %}
+
+{% block model_content %}
+<!-- Modal filter -->
+<div id="filterModel" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="filterModelLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="filterForm">
+                    {% for key, value in request.GET.items %} 
+                        {% if key == 'search' or key == 'per_page'%}
+                            <input type="hidden" name="{{ key }}" value="{{ value }}">
+                        {% endif %}
+                    {% endfor %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModelLabel">Apply Filters</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <label class="form-label">Filter products by minimum scans</label>
+                            <input type="number" class="form-control" name="count" id="scan_count" value="{{ scan_count }}">
+                        </div>
+
+                        <div class="col-md-12 mb-4">
+                            <label class="form-label m-r-15">Score: <span id="scoreLabel">1 : 100</span></label>
+                            <input id="scoreRange" name="scoreRange" type="text" class="slider p-" value="{{request.GET.scoreRange}}" data-slider-min="1" data-slider-max="100" data-slider-step="1" data-slider-value="[{{score_min}},{{score_max}}]"/>
+                        </div>
+
+                        <div class="col-md-12 mb-4">
+                            <label class="form-label d-block">Status</label>
+                            {% for value, label in status_choices %}
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" name="status[]" id="status_{{ value }}" value="{{ value }}" {% if value in selected_statuses %}checked{% endif %}>
+                                    <label class="form-check-label" for="status_{{ value }}">{{ label }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-md-12 mb-4">
+                            <label class="form-label d-block">Grade</label>
+                            {% for value, label in grade_choices %}
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" name="grade[]" id="grade_{{ value }}" value="{{ value }}" {% if value in selected_grades %}checked{% endif %}>
+                                    <label class="form-check-label" for="grade_{{ value }}">{{ label }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    {% if query_string %}
+                        <button type="button" class="btn btn-warning" onclick="clearFilters()" data-bs-dismiss="modal"><i class="feather icon-filter ms-1"></i> Clean Filters </button>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="barcodeModel" class="modal fade modal-animate" tabindex="-1" role="dialog" aria-labelledby="barcodeModelLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="barcodeModelLabel">Barcode</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                
+                <div class="modal-body text-center">
+                <img id="barcodeImage" src="" alt="Barcode Image" class="img-fluid" />
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock model_content %}
+
+    
+
+{% block extrajs %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/bootstrap-slider.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#scoreRange").slider();
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('barcodeModel');
+        const barcodeImage = document.getElementById('barcodeImage');
+
+        modal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const barcode = button.getAttribute('data-barcode');
+
+            const url = `https://barcode.tec-it.com/barcode.ashx?data=${barcode}&translate-esc=on`;
+
+            barcodeImage.src = url;
+        });
+
+        modal.addEventListener('hidden.bs.modal', function () {
+            barcodeImage.src = '';
+        });
+    });
+</script>
+
+{% endblock extrajs %}

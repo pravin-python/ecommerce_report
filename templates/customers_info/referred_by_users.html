@@ -1,0 +1,59 @@
+{% extends "layouts/details_base.html" %}
+{% load static %}
+
+{% block title %}Customer{% endblock title %}
+
+{% block cart_header %}
+   <div class="col-sm-12">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="card bg-c-yellow order-card">
+                    <div class="card-body">
+                        <h6 class="text-white">Non Referred Customers</h6>
+                        <h2 class="text-end text-white"><i class="feather icon-user float-start"></i><span id="non-referred">{{ total_non_referred_users }}</span></h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="card bg-c-red order-card">
+                    <div class="card-body">
+                        <h6 class="text-white">Referred Customers</h6>
+                        <h2 class="text-end text-white"><i class="feather icon-user-check float-start"></i><span id="referred-users">{{ total_referred_users }}</span></h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock cart_header %}
+
+{% block content_table %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Referrer Name</th>
+                <th scope="col">Referral Count</th>
+            </tr>
+        </thead>
+        <tbody class="table-group-divider">
+            {% for ref in page_obj %}
+            <tr>
+                <td>
+                    {% if ref.referred_by %}
+                        <a href="{% url 'customer_referred_list' ref.referred_by %}">
+                            {{ ref.referrer_name }}
+                        </a>
+                    {% else %}
+                        {{ ref.referrer_name }}
+                    {% endif %}
+                </td>
+                <td>{{ ref.total_referrals }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="2" class="text-center">No referrals found.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock content_table %}
+

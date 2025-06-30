@@ -1,0 +1,158 @@
+{% extends "layouts/details_base.html" %}
+
+{% load static %}
+{% load page %}
+
+{% block title %} Leaderboard {% endblock title %}
+
+{% block extra_header_content %}
+    <!-- Filters Button -->
+    <div class="col-auto m-2px">
+        <ul class="nav nav-pills">
+            <li class="nav-item me-1 border rounded-3">
+                <a class="nav-link {% if request.GET.sort_time == 'this_week' %}active{% endif %}" href="?sort_time=this_week&{{ query_time }}">
+                    <i class="feather icon-calendar me-1"></i>This Week
+                </a>
+            </li>
+            <li class="nav-item me-1 border rounded-3">
+                <a class="nav-link {% if request.GET.sort_time == 'this_month' %}active{% endif %}" href="?sort_time=this_month&{{ query_time }}">
+                    <i class="feather icon-calendar me-1"></i>This Month
+                </a>
+            </li>
+            <li class="nav-item border rounded-3">
+                <a class="nav-link {% if request.GET.sort_time == 'this_year' %}active{% endif %}" href="?sort_time=this_year&{{ query_time }}">
+                    <i class="feather icon-calendar me-1"></i>This Year
+                </a>
+            </li>
+        </ul>
+    </div>
+
+{% endblock extra_header_content %}
+
+
+{% block content_table %}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            {% for col, label in table_headers %}
+            <th>
+                <a href="?sort_by={{ col }}&order={% if request.GET.sort_by == col and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}&{% query_sort_oder request %}">
+
+                    {{ label }}
+                    {% if request.GET.sort_by == col %}
+                        {% if request.GET.order == 'asc' %}▲{% else %}▼{% endif %}
+                    {% endif %}
+                </a>
+            </th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody class="table-group-divider">
+        {% for history in page_obj.object_list %}
+        <tr>
+            <td>{{ history.customer__name|default:"-" }}</td> 
+            <td>
+                {{ history.product_upload_points|default:0 }}
+                <div class="progress mt-1" style="height:8px;" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="{{ history.product_upload_percent|floatformat:2 }}%">
+                    <div class="progress-bar bg-success rounded"
+                        role="progressbar"
+                        style="width: {{ history.product_upload_percent|floatformat:2 }}%;"
+                        aria-valuenow="{{ history.product_upload_points|default:0 }}"
+                        aria-valuemin="0"
+                        aria-valuemax="{{ history.total_points }}">
+                    </div>
+                </div>
+            </td>
+
+            <td>
+                {{ history.product_review_points|default:0 }}
+                <div class="progress mt-1" style="height:8px;" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="{{ history.product_review_percent|floatformat:2 }}%">
+                    <div class="progress-bar bg-danger rounded"
+                        role="progressbar"
+                        style="width: {{ history.product_review_percent|floatformat:2 }}%;"
+                        aria-valuenow="{{ history.product_review_points|default:0 }}"
+                        aria-valuemin="0"
+                        aria-valuemax="{{ history.total_points }}">
+                    </div>
+                </div>
+            </td>
+            <td>
+                {{ history.product_scan_points|default:0 }}
+                <div class="progress mt-1" style="height:8px;" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="{{ history.product_scan_percent|floatformat:2 }}%">
+                    <div class="progress-bar bg-info rounded"
+                        role="progressbar"
+                        style="width: {{ history.product_scan_percent|floatformat:2 }}%;"
+                        aria-valuenow="{{ history.product_scan_points|default:0 }}"
+                        aria-valuemin="0"
+                        aria-valuemax="{{ history.total_points }}">
+                    </div>
+                </div>
+            </td>
+
+            <td>
+                <a href="{% url 'customer_referred_list' history.customer_id %}" target="_blank">{{ history.app_referral_points|default:0 }}</a>
+                <div class="progress mt-1" style="height:8px;" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="{{ history.app_referral_percent|floatformat:2 }}%">
+                    <div class="progress-bar bg-warning rounded"
+                        role="progressbar" 
+                        style="width: {{ history.app_referral_percent|floatformat:2 }}%;"
+                        aria-valuenow="{{ history.app_referral_points|default:0 }}"
+                        aria-valuemin="0"
+                        aria-valuemax="{{ history.total_points }}">
+                    </div>
+                </div>
+            </td>
+            <td>
+                <span class="fw-bold">
+                    {{ history.total_points|default:0 }}
+                </span>
+                <div class="progress mt-1" style="height:8px;" >
+                    <div class="progress-bar bg-success" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="{{ history.product_upload_percent|floatformat:2 }}%"
+                        role="progressbar"
+                        style="width: {{ history.product_upload_percent|floatformat:2 }}%;"
+                        aria-valuenow="{{ history.product_upload_points|default:0 }}"
+                        aria-valuemin="0"
+                        aria-valuemax="{{ history.total_points }}">
+                    </div>
+                    <div class="progress-bar bg-danger" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="{{ history.product_review_percent|floatformat:2 }}%"
+                        role="progressbar"
+                        style="width: {{ history.product_review_percent|floatformat:2 }}%;"
+                        aria-valuenow="{{ history.product_review_points|default:0 }}"
+                        aria-valuemin="0"
+                        aria-valuemax="{{ history.total_points }}">
+                    </div>
+                    <div class="progress-bar bg-info" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="{{ history.product_scan_percent|floatformat:2 }}%"
+                        role="progressbar"
+                        style="width: {{ history.product_scan_percent|floatformat:2 }}%;"
+                        aria-valuenow="{{ history.product_scan_points|default:0 }}"
+                        aria-valuemin="0"
+                        aria-valuemax="{{ history.total_points }}">
+                    </div>
+                    <div class="progress-bar bg-warning" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="{{ history.app_referral_percent|floatformat:2 }}%"
+                        role="progressbar" 
+                        style="width: {{ history.app_referral_percent|floatformat:2 }}%;"
+                        aria-valuenow="{{ history.app_referral_points|default:0 }}"
+                        aria-valuemin="0"
+                        aria-valuemax="{{ history.total_points }}">
+                    </div>
+                        <div class="progress-bar bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="{{ history.other_points_percent|floatformat:2 }}% (Other)"
+                        role="progressbar" 
+                        style="width: {{ history.other_points_percent|floatformat:2 }}%;"
+                        aria-valuenow="{{ history.other_points_percent|default:0 }}"
+                        aria-valuemin="0"
+                        aria-valuemax="{{ history.total_points }}">
+                    </div>
+                </div>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">No Customers found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock content_table %}
+
+
+
+    

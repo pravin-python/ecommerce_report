@@ -1,0 +1,203 @@
+{% extends "layouts/details_base.html" %}
+{% load static %}
+{% load page %}
+
+{% block title %}Products{% endblock title %} 
+
+
+{% block extra_header_content %}
+ <!-- Filters Button -->
+<div class="col-auto m-2px">
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModel">
+        <i class="feather icon-filter me-1"></i>Filters
+    </button>
+</div>
+{% endblock extra_header_content %}
+
+{% block content_table %}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Company</th>
+            <th>Diet Pref</th>
+            <th>Food Category</th>
+            <th>Grade</th>
+            <th>Nutrition Score</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for product in page_obj %}
+        <tr>
+            <td>{{ product.name }}</td>
+            <td>{{ product.company|default:"-" }}</td>
+            <td>{{ product.get_diet_display }}</td>
+            <td>{{ product.food_category|default:"-" }}</td>
+            <td>{{ product.grade_in|default:"-" }}</td>
+            <td>{{ product.score_in|default:"-" }}</td>
+            <td>
+                {% if product.status == 'enable' %}
+                    <span class="badge rounded-pill bg-success">Enabled</span>
+                {% elif product.status == 'disable' %}
+                    <span class="badge rounded-pill bg-danger">Disabled</span>
+                {% elif product.status == 'raw' %}
+                    <span class="badge rounded-pill bg-info text-dark">Raw</span>
+                {% elif product.status == 'exempted' %}
+                    <span class="badge rounded-pill bg-secondary">Exempted</span>
+                {% elif product.status == 'deficient' %}
+                    <span class="badge rounded-pill bg-warning text-dark">Deficient</span>
+                {% else %}
+                    <span class="badge bg-secondary">-</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No products found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock content_table %}
+
+
+
+{% block model_content %}
+<div id="filterModel" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="filterModelLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <form id="filterForm">
+                {% for key, value in request.GET.items %}
+                    {% if key == 'search' or key == 'per_page' %}
+                        <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endif %}
+                {% endfor %}
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModelLabel">Apply Filters</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <div class="row gy-4">
+                            <!-- Diet Pref -->
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Diet Preference</label>
+                                <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-2">
+                                    {% for value, label in diet_choices %}
+                                        <div class="col">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="diet[]" id="diet_{{ value }}" value="{{ value }}" {% if value in selected_diet %}checked{% endif %}>
+                                                <label class="form-check-label" for="diet_{{ value }}">{{ label }}</label>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Food Category -->
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Food Category</label>
+                                <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-2">
+                                    {% for value, label in food_category_choices %}
+                                        <div class="col">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="food_category[]" id="food_category_{{ value }}" value="{{ value }}" {% if value in selected_food_categories %}checked{% endif %}>
+                                                <label class="form-check-label" for="food_category_{{ value }}">{{ label }}</label>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Grade -->
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Grade</label>
+                                <div class="row row-cols-3 row-cols-md-6 g-2">
+                                    {% for value, label in grade_choices %}
+                                        <div class="col">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="grade[]" id="grade_{{ value }}" value="{{ value }}" {% if value in selected_grades %}checked{% endif %}>
+                                                <label class="form-check-label" for="grade_{{ value }}">{{ label }}</label>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Status</label>
+                                <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-2">
+                                    {% for value, label in status_choices %}
+                                        <div class="col">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="status[]" id="status_{{ value }}" value="{{ value }}" {% if value in selected_statuses %}checked{% endif %}>
+                                                <label class="form-check-label" for="status_{{ value }}">{{ label }}</label>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Categories -->
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Categories</label>
+                                <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-2">
+                                    {% for value, label in category_choices %}
+                                        <div class="col">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="category[]" id="category_{{ value }}" value="{{ value }}" {% if value|stringformat:"s" in selected_categories %}checked{% endif %}>
+                                                <label class="form-check-label" for="category_{{ value }}">{{ label }}</label>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Nutrition Score -->
+                            <div class="col-12">
+                                <label class="form-label d-block fw-bold">Nutrition Score: <span id="scoreLabel">1 : 100</span></label>
+                                <input id="scoreRange" name="scoreRange" type="text" class="form-control slider"
+                                    value="{{ request.GET.scoreRange }}"
+                                    data-slider-min="1" data-slider-max="100"
+                                    data-slider-step="1"
+                                    data-slider-value="[{{score_min}},{{score_max}}]" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    {% query_string request as params_string %}
+                    {% if params_string %}
+                        <button type="button" class="btn btn-secondary" onclick="clearFilters()">
+                            <i class="feather icon-filter ms-1"></i> Clean Filters
+                        </button>
+                    {% endif %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock model_content %}
+
+
+{% block extrastyle %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/css/bootstrap-slider.min.css">
+{% endblock extrastyle %}
+
+{% block extrajs %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/bootstrap-slider.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#scoreRange").slider();
+    });
+</script>
+{% endblock extrajs %}

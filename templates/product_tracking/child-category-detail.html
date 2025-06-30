@@ -1,0 +1,33 @@
+{% extends "layouts/details_base.html" %}
+
+{% load static %}
+
+{% block title %}Child Categories{% endblock title %}
+
+{% block content_table %}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Category</th>
+            <th>
+                <a href="?order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}&{{query_sort_oder}}">
+                    Scan Count
+                    {% if request.GET.order == 'asc' %}▲{% else %}▼{% endif %}
+                </a>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for child in page_obj %}
+            <tr>
+                <td>{{ child.name }}</td>
+                <td>{{ child.scan_count }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="2" class="text-center">No child categories found.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock content_table %}

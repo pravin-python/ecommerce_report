@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  {% include 'includes/head.html' %}
+  <style>
+    :root {
+        --theme-green: #28a745;
+        --theme-light-green: #d4edda;
+    }
+
+    .btn-theme {
+        background-color: var(--theme-green);
+        border-color: var(--theme-green);
+        color: #fff;
+    }
+
+    .btn-theme:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+
+    .auth-wrapper {
+        background-color: #f8f9fa;
+    }
+
+    .auth-content {
+        width: 100%;
+        max-width: 420px;
+        margin: auto;
+    }
+
+    .card-body a {
+        color: var(--theme-green);
+    }
+
+    .card-body a:hover {
+        text-decoration: underline;
+    }
+    
+    .login-box-msg {
+        font-size: 1rem;
+        color: #333;
+        margin-bottom: 1.5rem;
+    }
+
+    .input-group-text {
+        background-color: var(--theme-light-green);
+        border-right: 0;
+    }
+
+    .form-control {
+        border-left: 0;
+    }
+</style>
+  {% block extrastyle %}{% endblock extrastyle %}
+</head>
+<body class="{% block bodyclass %}{% endblock bodyclass %}">
+
+  {% block content %}{% endblock content %}
+
+  {% include 'includes/scripts.html' %}
+  {% block scripts %}
+  <script src="{% static 'assets/js/vendor-all.min.js' %}"></script>
+  <script src="{% static 'assets/js/plugins/bootstrap.min.js' %}"></script>
+  <script src="{% static 'assets/js/waves.min.js' %}"></script>
+  {% endblock scripts %}
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FYFQZT1VY2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-FYFQZT1VY2');
+</script>
+
+</body>
+</html>

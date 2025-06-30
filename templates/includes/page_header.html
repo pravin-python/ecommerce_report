@@ -1,0 +1,134 @@
+<div class="page-header">
+    <div class="page-block">
+        <div class="row align-items-center justify-content-between">
+            <div class="col-md-8">
+                <div class="page-header-title">
+                    <h5 class="mb-0">{{ title }}</h5>
+                </div>
+                <ul class="breadcrumb mt-3">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'index' %}"><i class="feather icon-home"></i> Dashboard</a>
+                    </li>
+                    {% for item in breadcrumb_items %}
+                        <li class="breadcrumb-item {% if forloop.last %}active{% endif %}">
+                            {% if item.url and not forloop.last %}
+                                <a href="{% url item.url %}">{{ item.label }}</a>
+                            {% else %}
+                                {{ item.label }}
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="d-flex flex-column align-items-end">
+                    {% if show_chart %}
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="isChartCheckbox" {% if chart.is_chart %}checked{% endif %}>
+                            <label class="form-check-label ms-2" for="isChartCheckbox">Chart</label>
+                        </div>
+                    {% endif %}
+                    {% if show_table %}
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="isTableCheckbox" {% if table.is_table %}checked{% endif %}>
+                            <label class="form-check-label ms-2" for="isTableCheckbox">Table</label>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% if show_chart %}
+    {{ chart_component|json_script:"chart-config" }}
+{% endif %}
+{% if show_table %}
+    {{ table_component|json_script:"table-config" }}
+{% endif %}
+
+<script>
+    {% if show_chart %}
+        const CHART_CONFIG = JSON.parse(document.getElementById("chart-config").textContent);
+    {% endif %}
+    {% if show_table %}
+        const TABLE_CONFIG = JSON.parse(document.getElementById("table-config").textContent);
+    {% endif %}
+    const PAGE_URL = "{{ request.path }}";
+    const CSRF_TOKEN = "{{ csrf_token }}";
+
+    function sendComponentUpdate(data) {
+        fetch("{% url 'submit-dashboard-component' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": CSRF_TOKEN
+            },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(response => {
+            showToast(response.message || "Updated!", response.status || "success");
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            showToast("AJAX error occurred!", "danger");
+        });
+    }
+
+    {% if show_chart %}
+        function updateChartComponent() {
+            if (!document.getElementById("isChartCheckbox")) return;
+            const isChart = document.getElementById("isChartCheckbox").checked;
+
+            const data = {
+                name: CHART_CONFIG.name,
+                is_chart: isChart,
+                is_table: false,
+                chart_type: CHART_CONFIG.chart_type,
+                ajax_url: CHART_CONFIG.ajax_url,
+                page_url: PAGE_URL,
+                is_fillter: CHART_CONFIG.is_filter,
+                fillter_value: {
+                    filter_button: CHART_CONFIG.filter_buttons || {}
+                }
+            };
+
+            sendComponentUpdate(data);
+        }
+    
+    {% endif %}
+    {% if show_table %}
+        function updateTableComponent() {
+            if (!document.getElementById("isTableCheckbox")) return;
+            const isTable = document.getElementById("isTableCheckbox").checked;
+
+            const data = {
+                name: TABLE_CONFIG.name,
+                is_chart: false,
+                is_table: isTable,
+                chart_type: '',
+                ajax_url: TABLE_CONFIG.ajax_url,
+                page_url: PAGE_URL,
+                is_fillter: TABLE_CONFIG.is_filter,
+                fillter_value: {
+                    filter_button: TABLE_CONFIG.filter_buttons || {}
+                }
+            };
+
+            sendComponentUpdate(data);
+        }
+    {% endif %}
+    // Bind once DOM is ready
+    document.addEventListener("DOMContentLoaded", function () {
+        {% if show_chart %}
+            if (document.getElementById("isChartCheckbox")) {
+                document.getElementById("isChartCheckbox").addEventListener("change", updateChartComponent);
+            }
+        {% endif %}
+        {% if show_table %}
+            if (document.getElementById("isTableCheckbox")) {
+                document.getElementById("isTableCheckbox").addEventListener("change", updateTableComponent);
+            }
+        {% endif %}
+    });
+</script>

@@ -1,0 +1,44 @@
+{% extends 'layouts/auth_base.html' %}
+{% load static %}
+{% block content %}
+<!-- [ auth-signup ] start -->
+<div class="d-flex align-items-center justify-content-center min-vh-100" style="background-color: #f8f9fa;">
+    <div class="auth-content w-100" style="max-width: 420px;">
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center p-4">
+                <img src="{% static 'img/Logo.svg' %}" alt="Logo" class="img-fluid mb-4" style="max-height: 60px;">
+                <h4 class="mb-3 fw-semibold text-success">Sign up</h4>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">
+                                <i class="feather 
+                                    {% if field.name == 'username' %}icon-user{% elif field.name == 'email' %}icon-mail{% else %}icon-lock{% endif %}">
+                                </i>
+                            </span>
+                            {{ field }}
+                        </div>
+                        {% if field.errors %}
+                            <div class="text-danger small mb-2">{{ field.errors }}</div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- <div class="form-check text-start mt-2 mb-3">
+                        <input class="form-check-input" type="checkbox" id="newsletter" name="newsletter">
+                        <label class="form-check-label" for="newsletter">
+                            Send me the <a href="#" class="text-success">Newsletter</a> weekly.
+                        </label>
+                    </div> -->
+
+                    <button class="btn btn-theme w-100 mt-2 mb-3">Sign up</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- [ auth-signup ] end -->
+{% endblock content %}

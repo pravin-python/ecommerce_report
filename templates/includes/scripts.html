@@ -1,0 +1,16 @@
+{% load static %}
+<!-- Required Js -->
+<script src="{% static 'assets/js/plugins/popper.min.js' %}"></script>
+<script src="{% static 'assets/js/plugins/perfect-scrollbar.min.js' %}"></script>
+<script src="{% static 'assets/js/plugins/bootstrap.min.js' %}"></script>
+<script src="{% static 'assets/js/pcoded.js' %}"></script>
+
+<script>
+   function clearFilters() {
+      const url = new URL(window.location.href);
+      const params = url.searchParams;
+      const path = window.location.pathname;
+      const page = params.get('page');
+      window.location.href = path + (page ? `?page=${page}` : '');
+   }
+</script>

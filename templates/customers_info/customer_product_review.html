@@ -1,0 +1,122 @@
+{% extends "layouts/details_base.html" %}
+
+
+{% load page %}
+
+{% block title %}Customer Product Problem Report{% endblock %}
+
+{% block extrastyle %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/css/bootstrap-slider.min.css">
+{% endblock extrastyle %}
+
+
+
+{% block extra_header_content %}
+    <!-- Filters Button -->
+    <div class="col-auto m-2px">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModel">
+            <i class="feather icon-filter me-1"></i>Filters
+        </button>
+    </div>
+{% endblock extra_header_content %}
+
+{% block content_table %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Customer</th>
+                <th scope="col">Product</th>
+                <th scope="col" style="max-width: 300px; white-space: normal;">Review</th>
+                <th scope="col">Rating</th>
+                <th scope="col">Status</th>
+                <th scope="col">Date</th>
+            </tr>
+        </thead>
+        <tbody class="table-group-divider">
+            {% for detail in page_obj %}
+            <tr>
+                <td>{{ detail.customer_name|default:"Guest User" }}</td>
+                <td>{{ detail.product_name }}</td>
+                <td style="max-width: 300px; white-space: normal; word-break: break-word;">{{ detail.review|default:"-" }}</td>
+                <td>{{ detail.rating|default:"-" }}</td>
+                <td>
+                    {% if detail.status == 'active' %}
+                        <span class="badge bg-info text-dark">Active</span>
+                    {% elif detail.status == 'inactive' %}
+                        <span class="badge bg-secondary">Inactive</span>
+                    {% elif detail.status == 'approved' %}
+                        <span class="badge bg-success">Approved</span>
+                    {% elif detail.status == 'rejected' %}
+                        <span class="badge bg-danger">Rejected</span>
+                    {% elif detail.status == 'processing' %}
+                        <span class="badge bg-warning text-dark">Processing</span>
+                    {% else %}
+                        <span class="badge bg-light text-dark">{{ detail.status|capfirst }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ detail.updated_at|date:"d-m-Y" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+{% endblock content_table %}
+
+{% block model_content %}
+
+    <div id="filterModel" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="filterModelLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="filterForm">
+                    {% for key, value in request.GET.items %} 
+                        {% if key == 'search' or key == 'per_page'%}
+                            <input type="hidden" name="{{ key }}" value="{{ value }}">
+                        {% endif %}
+                    {% endfor %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="filterModelLabel">Apply Filters</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="form-label d-block"><strong>Status:</strong></label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for value, label in status_choices %}
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" name="status" id="status_{{ forloop.counter }}" value="{{ value }}"
+                                                {% if value in selected_statuses %}checked{% endif %}>
+                                            <label class="form-check-label" for="status_{{ forloop.counter }}">{{ label }}</label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-12 mt-3">
+                                <label class="form-label m-r-15"><strong>Rating: </strong><span id="scoreLabel">1 : 5</span></label>
+                                <input id="scoreRange" name="scoreRange" type="text" class="slider p-" value="{{request.GET.scoreRange}}" data-slider-min="1" data-slider-max="5" data-slider-step="1" data-slider-value="[{{score_min}},{{score_max}}]"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        {% if current_params %}
+                            <button type="button" class="btn btn-secondary" onclick="clearFilters()" data-bs-dismiss="modal"><i class="feather icon-filter ms-1"></i> Clean Filters </button>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock model_content %}
+
+
+{% block extrajs %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/bootstrap-slider.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#scoreRange").slider();
+    });
+</script>
+{% endblock extrajs %}

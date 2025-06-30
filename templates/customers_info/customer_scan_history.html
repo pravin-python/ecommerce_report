@@ -1,0 +1,307 @@
+{% extends "layouts/details_base.html" %}
+
+{% load static %}
+{% load page %}
+
+{% block title %} Customer Scanned Products {% endblock title %}
+
+{% block extra_header_content %}
+    <!-- Filters Button -->
+    <div class="col-auto m-2px">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModel">
+            <i class="feather icon-filter me-1"></i>Filters
+        </button>
+    </div>
+
+    <div class="col-auto m-2px">
+        <button type="button" class="btn btn-success"  data-bs-toggle="modal" data-bs-target="#chartModalToggle">
+            <i class="feather icon-bar-chart-2 me-1"></i>Chart
+        </button>
+    </div>
+{% endblock extra_header_content %}
+
+{% block content_table %}
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Customer Name</th>
+            <th scope="col">Product Name</th>
+            <th scope="col">Barcode</th>
+            <th scope="col">Score (Grade)</th>
+            <th scope="col">Status</th>
+            <th scope="col">Date</th>
+        </tr>
+    </thead>
+    <tbody class="table-group-divider">
+        {% for history in page_obj.object_list %}
+        <tr>
+            <td>{{ history.customer.name|default:"-" }}</td>  
+            <td>{{ history.product.name }}</td>
+            <td>
+                <a href="#" class="text-primary text-decoration-underline"
+                    data-barcode="{{ history.product.barcode }}"
+                    data-bs-toggle="modal"
+                    data-bs-target="#barcodeModel">
+                    {{ history.product.barcode }}
+                </a>
+            </td>
+            <td>{{ history.product.score_in|default:"-" }} {% if history.product.grade_in %}({{ history.product.grade_in|default:"-" }}) {% endif %}</td>
+            <td>
+                {% if history.product.status == 'enable' %}
+                    <span class="badge rounded-pill bg-success">Enabled</span>
+                {% elif history.product.status == 'disable' %}
+                    <span class="badge rounded-pill bg-danger">Disabled</span>
+                {% elif history.product.status == 'raw' %}
+                    <span class="badge rounded-pill bg-warning">Raw</span>
+                {% else %}
+                    <span class="badge bg-secondary">Exempted</span>
+                {% endif %}
+            </td>
+            <td>{{ history.updated_at }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No scan history found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock content_table %}
+
+{% block model_content %}
+<!-- Modal filter -->
+<div id="filterModel" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="filterModelLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="filterForm">
+                    {% for key, value in request.GET.items %} 
+                        {% if key == 'search' or key == 'per_page'%}
+                            <input type="hidden" name="{{ key }}" value="{{ value }}">
+                        {% endif %}
+                    {% endfor %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModelLabel">Apply Filters</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <label class="form-label">Date Range</label>
+                           <div class="input-daterange input-group" id="datepicker_range">
+                                <input type="text" class="form-control" name="date_start" placeholder="Start date" value="{{ request.GET.date_start }}">
+                                <span class="input-group-text">to</span>
+                                <input type="text" class="form-control" name="date_end" placeholder="End date" value="{{ request.GET.date_end }}">
+                            </div>
+                        </div>
+
+                        <div class="col-md-12 mb-4">
+                            <label class="form-label m-r-15">Score: <span id="scoreLabel">1 : 100</span></label>
+                            <input id="scoreRange" name="scoreRange" type="text" class="slider p-" value="{{request.GET.scoreRange}}" data-slider-min="1" data-slider-max="100" data-slider-step="1" data-slider-value="[{{score_min}},{{score_max}}]"/>
+                        </div>
+
+                        <div class="col-md-12 mb-4">
+                            <label class="form-label d-block">Status</label>
+                            {% for value, label in status_choices %}
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" name="status[]" id="status_{{ value }}" value="{{ value }}" {% if value in selected_statuses %}checked{% endif %}>
+                                    <label class="form-check-label" for="status_{{ value }}">{{ label }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-md-12 mb-4">
+                            <label class="form-label d-block">Grade</label>
+                            {% for value, label in grade_choices %}
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" name="grade[]" id="grade_{{ value }}" value="{{ value }}" {% if value in selected_grades %}checked{% endif %}>
+                                    <label class="form-check-label" for="grade_{{ value }}">{{ label }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    {% query_string request as params_string %}
+                    {% if params_string %}
+                        <button type="button" class="btn btn-warning" onclick="clearFilters()" data-bs-dismiss="modal"><i class="feather icon-filter ms-1"></i> Clean Filters </button>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="barcodeModel" class="modal fade modal-animate" tabindex="-1" role="dialog" aria-labelledby="barcodeModelLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="barcodeModelLabel">Barcode</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                
+                <div class="modal-body text-center">
+                <img id="barcodeImage" src="" alt="Barcode Image" class="img-fluid" />
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="chartModalToggle" aria-hidden="true" aria-labelledby="chartModalToggleLabel" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="chartModalToggleLabel">Customer Scanned Products Chart</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="container-fluid">
+          <div class="row justify-content-center">
+            <div class="col-12">
+              <div class="card shadow-sm border-0">
+                <div class="card-body">
+                  
+                  <!-- Filter Buttons -->
+                  <div class="d-flex justify-content-center gap-2 mb-4">
+                    <button class="btn btn-outline-success active" onclick="changeFilter('daily')" name="daily">Daily</button>
+                    <button class="btn btn-outline-success" onclick="changeFilter('week')" >Weekly</button>
+                    <button class="btn btn-outline-success" onclick="changeFilter('month')">Monthly</button>
+                    <button class="btn btn-outline-success" onclick="changeFilter('year')">Yearly</button>
+                  </div>
+
+                  <!-- Chart Area -->
+                  <div id="customers-scan-product" style="min-height: 350px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- End Modal filter -->
+{% endblock model_content %}
+
+
+{% block extrastyle %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/css/bootstrap-slider.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" rel="stylesheet">
+{% endblock extrastyle %}
+
+{% block extrajs %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/bootstrap-slider.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#scoreRange").slider();
+
+        $('#datepicker_range').datepicker({
+          format: "yyyy-mm-dd",
+          autoclose: true,
+          todayHighlight: true,
+          endDate: '0d'
+        });
+    });
+
+    //barcode create API
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('barcodeModel');
+        const barcodeImage = document.getElementById('barcodeImage');
+
+        modal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const barcode = button.getAttribute('data-barcode');
+
+            let url = "";
+            if (barcode) {
+                url = `https://barcode.tec-it.com/barcode.ashx?data=${barcode}&translate-esc=on`;
+            }
+
+            barcodeImage.src = url;
+        });
+
+        modal.addEventListener('hidden.bs.modal', function () {
+            barcodeImage.src = '';
+        });
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    let chartInstance = null;
+
+    function fetchChartDataAndRender(filter = 'daily') {
+        return fetch(`/api/customers/scan-summary/chart/?filter=${filter}`)
+            .then(response => response.json())
+            .then(json => {
+                renderChart(json);
+                return json;
+            })
+            .catch(error => {
+                console.error("Error fetching chart data:", error);
+            });
+    }
+
+    function renderChart(json) {
+        const label = json.map(entry => entry.label );
+        const data = json.map(entry => entry.count);
+        const areaOptions = {
+            chart: {
+                height: 340,
+                type: "area",
+                toolbar: { show: true }
+            },
+            dataLabels: { enabled: true },
+            stroke: { curve: "smooth" },
+            colors: ["#00B249"],
+            series: [{
+                name: "Scanned Products",
+                data: data
+            }],
+            xaxis: {
+                type: "string",
+                categories: label,
+            },
+        };
+
+        const chartContainer = document.querySelector("#customers-scan-product");
+
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        chartInstance = new ApexCharts(chartContainer, areaOptions);
+        chartInstance.render();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const modal = document.getElementById('chartModalToggle');
+        let data = null
+        modal.addEventListener('shown.bs.modal', () => {
+            if(!data){
+                data = fetchChartDataAndRender(); 
+            }
+        });
+    });
+
+    function changeFilter(filter) {
+        fetchChartDataAndRender(filter);
+        const buttons = document.querySelectorAll(".btn-outline-success");
+        buttons.forEach(btn => btn.classList.remove("active"));
+
+        const clickedButton = [...buttons].find(btn => btn.getAttribute("onclick")?.includes(filter));
+        if (clickedButton) {
+            clickedButton.classList.add("active");
+        }
+    }
+</script>
+
+{% endblock extrajs %}
+
+    

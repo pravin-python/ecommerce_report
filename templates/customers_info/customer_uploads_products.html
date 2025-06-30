@@ -1,0 +1,29 @@
+{% extends "layouts/details_base.html" %}
+
+{% load static %}
+
+{% block title %}Customer{% endblock title %}
+
+{% block content_table %}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Customer</th>
+            <th>Customer Products</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for customer in page_obj %}
+            <tr>
+                <td>{{ customer.name }}</td>
+                <td>
+                    <a href="{% url 'customer_product_details' customer.id %}">View Products</a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="2" class="text-center">No records found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock content_table %}
+

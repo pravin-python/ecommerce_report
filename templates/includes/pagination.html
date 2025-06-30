@@ -1,0 +1,39 @@
+{% load page %}
+<div class="row g-0">
+    {% if page_obj.object_list %}
+        <div class="col-sm-12">
+            <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}.</span>
+        </div>
+    {% endif %}
+    {% if page_obj.paginator.num_pages > 1 %}
+        <div class="col-sm-12 align-items-center mt-2 ">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1&{% query_string request %}"><i class="feather icon-chevrons-left"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{% query_string request %}"><i class="feather icon-chevron-left"></i></a></li>
+                {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#"><i class="feather icon-chevrons-left"></i></a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#"><i class="feather icon-chevron-left"></i></a></li>
+                {% endif %}
+
+                {% for i in page_obj.paginator.page_range %}
+                    {% if i >= page_obj.number|add:-2 and i <= page_obj.number|add:2 %}
+                        {% if i == page_obj.number %}
+                            <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ i }}&{% query_string request %}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{% query_string request %}"><i class="feather icon-chevron-right"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&{% query_string request %}"><i class="feather icon-chevrons-right"></i></a></li>
+                {% else %}
+                    <li class="page-item disabled"><a class="page-link" href="#"><i class="feather icon-chevron-right"></i></a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#"><i class="feather icon-chevrons-right"></i></a></li>
+                {% endif %}
+            </ul>
+        </div>
+    {% endif %}
+</div>

@@ -1,0 +1,109 @@
+{% load static %}
+<header class="navbar pcoded-header navbar-expand-lg navbar-light headerpos-fixed header-green">
+    <div class="m-header">
+        <a class="mobile-menu" id="mobile-collapse" href="#"><span></span></a>
+        <a href="#" class="b-brand">
+            <!-- ========   change your logo hear   ============ -->
+            <img src="{% static 'img/Logo.svg' %}" alt="" class="logo">
+        </a>
+        <a href="#" class="mob-toggler">
+            <i class="feather icon-more-vertical"></i>
+        </a>
+    </div>
+    <div class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto">
+            <li class="nav-item position-relative">
+                <a href="#" class="pop-search"><i class="feather icon-search"></i></a>
+                <div class="search-bar">
+                    <input type="text" id="searchInput" class="form-control border-0 shadow-none " placeholder="Search here">
+                    <button type="button" class="btn-close" aria-label="Close"></button>
+                    <ul id="searchResults" class="list-group position-absolute w-100" style="z-index: 1000;"></ul>
+                </div>
+            </li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+            <li>
+                <div class="dropdown drp-user">
+                    <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
+                        <img src="{% static 'assets/images/logo-thumb.png' %}" class="img-radius wid-40"
+                            alt="User-Profile-Image">
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end profile-notification">
+                        <div class="pro-head">
+                            <img src="{% static 'assets/images/logo-thumb.png' %}" class="img-radius"
+                                alt="User-Profile-Image">
+                                {% if request.user.is_authenticated %}
+                                    <span>{{ request.user.username }}</span>
+                                {% else %}
+                                    <span>Guest</span>
+                                {% endif %}
+                        </div>
+                        <ul class="pro-body">
+                            {% if request.user.is_authenticated %}
+                                <li><a href="{% url 'auth_signup' %}" class="dropdown-item">
+                                    <i class="feather icon-user-plus"></i> Add Account</a></li>
+                                <li><a href="{% url 'password_change' %}" class="dropdown-item">
+                                    <i class="feather icon-lock"></i> Change Password</a></li>
+                                <li><a href="{% url 'logout' %}" class="dropdown-item"><i
+                                            class="feather icon-log-out"></i> Logout</a></li>
+                            {% else %}
+                                <li><a href="{% url 'auth_signin' %}" class="dropdown-item"><i
+                                    class="feather icon-log-in"></i> Sign IN</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </li>
+        </ul>
+    </div>
+    
+
+</header>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('searchInput');
+    const resultBox = document.getElementById('searchResults');
+    const searchBar = document.getElementById('searchBar');
+
+    input.addEventListener('input', async function () {
+        const query = input.value.trim();
+
+        if (query.length < 2) {
+            resultBox.innerHTML = '';
+            resultBox.classList.add('d-none');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/pages/search/?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+
+            if (response.ok && data.total_records > 0) {
+                resultBox.innerHTML = data.data.map(item =>
+                    `<li class="list-group-item search-list">
+                        <a href="/${item.url_pattern}" class="text-decoration-none text-dark">${item.show_name}</a>
+                    </li>`
+                ).join('');
+                resultBox.classList.remove('d-none');
+            } else {
+                resultBox.innerHTML = `<li class="list-group-item text-muted search-list">No results found</li>`;
+                resultBox.classList.remove('d-none');
+            }
+        } catch (error) {
+            console.error('Error fetching search results:', error);
+            resultBox.innerHTML = `<li class="list-group-item text-danger search-list">Error loading results</li>`;
+            resultBox.classList.remove('d-none');
+        }
+    });
+
+    // // Hide result box on blur
+    // input.addEventListener('blur', () => {
+    //     // Allow time for click events on links
+    //     setTimeout(() => {
+    //         resultBox.innerHTML = '';
+    //         resultBox.classList.add('d-none');
+    //     }, 200);
+    // });
+});
+</script>

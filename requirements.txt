@@ -1,0 +1,16 @@
+# Core
+django==4.2.9
+
+# Tools
+django-debug-toolbar
+djangorestframework
+authtoken
+pandas
+
+# Deployment
+whitenoise
+
+# DB
+#psycopg2-binary
+mysqlclient
+django-dbbackup

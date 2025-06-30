@@ -1,0 +1,287 @@
+{% extends "layouts/base.html" %}
+
+{% load static %}
+
+{% block title %}Most Viewed Products{% endblock title %}
+
+{% block content %}
+<div class="pc-container">
+    <div class="page-header">
+        <div class="page-block">
+            <div class="row align-items-center">
+                <div class="col-sm-12">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">Most Viewed Products</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}"><i class="feather icon-home"></i></a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'scanned_categories' %}">Most Viewed Products</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <div class="total-products-id mt-3 mb-2">
+                <h5>Today's Most Viewed Products From Google Analytics</h5>
+                <span>Total Live Products Views: {{ total_products_id }}</span>
+            </div>
+            <form method="get" class="mb-3 border-top pt-3">
+                <div class="row align-items-center">
+                    {% for key, value in request.GET.items %} 
+                        {% if key != 'search' and key != 'page' and key != 'per_page'%}
+                            <input type="hidden" name="{{ key }}" value="{{ value }}">
+                        {% endif %}
+                    {% endfor %}
+                    <div class="col-md-4 mb-2">
+                        <div class="position-relative">
+                            <i class="feather icon-search position-absolute" style="left: 10px; top: 50%; transform: translateY(-50%); z-index: 2;"></i>
+                            <input type="text" class="form-control ps-5" id="search" name="search" value="{{ request.GET.search }}" placeholder="Search...">
+                        </div>
+                    </div>
+                    <div class="col-auto m-2px">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModel">
+                            <i class="feather icon-filter me-1"></i>Filters
+                        </button>
+                    </div>
+                    {% if current_params %}
+                    <div class="col-auto m-2px">
+                        <button type="button" class="btn btn-secondary" onclick="clearFilters()">
+                            <i class="feather icon-filter me-1"></i>Clean Filters
+                        </button>
+                    </div>
+                    {% endif %}
+                    <div class="col-auto m-2px">
+                        <a href="{{ refresh_url }}" id="refreshBtn" class="btn btn-outline-info" title="Refresh from Google Analytics">
+                            <i class="feather icon-refresh-cw me-1"></i>
+                            <span id="refreshBtnText">Refresh</span>
+                        </a>
+                        <span id="refreshCountdown" class="badge bg-warning ms-2 d-none"></span>
+                        {% if data_loaded_from_cache %}
+                            <span class="badge bg-secondary ms-2" title="Data loaded from cache">Cached</span>
+                        {% else %}
+                            <span class="badge bg-success ms-2" title="Data loaded from Google Analytics">Realtime Data</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-auto ms-auto text-md-end">
+                        <select name="per_page" class="form-select" onchange="this.form.submit()" title="Records per page">
+                            <option value="10" {% if request.GET.per_page == '10' %}selected{% endif %}>10</option>
+                            <option value="25" {% if request.GET.per_page == '25' %}selected{% endif %}>25</option>
+                            <option value="50" {% if request.GET.per_page == '50' %}selected{% endif %}>50</option>
+                            <option value="100" {% if request.GET.per_page == '100' %}selected{% endif %}>100</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="card-body border-top pro-wrk-edit collapse show">
+            <div class="col-sm-12 table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Barcode</th>
+                            <th>View Count</th>
+                            <th>Grade</th>
+                            <th>Nutrition Score</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in page_obj %}
+                            <tr>
+                                <td>{{ entry.name }}</td>
+                                <td>{{ entry.barcode }}</td>
+                                <td>{{ entry.event_count }}</td>
+                                <td>{{ entry.grade|default:"-" }}</td>
+                                <td>{{ entry.score|default:"-" }}</td>
+                                <td>
+                                    {% if entry.status == 'enable' %}
+                                        <span class="badge rounded-pill bg-success">Enabled</span>
+                                    {% elif entry.status == 'disable' %}
+                                        <span class="badge rounded-pill bg-danger">Disabled</span>
+                                    {% elif entry.status == 'raw' %}
+                                        <span class="badge rounded-pill bg-warning">Raw</span>
+                                    {% elif entry.status == 'deficient' %}
+                                        <span class="badge rounded-pill bg-info">Raw</span>
+                                    {% elif entry.status == 'exempted' %}
+                                        <span class="badge bg-secondary">Exempted</span>
+                                    {% else %}
+                                        <span class="badge text-dark">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No Products Found</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if page_obj.object_list %}
+                    <div class="col-sm-12">
+                        <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}.</span>
+                    </div>
+                {% endif %}
+                {% if page_obj.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-3">
+                        <ul class="pagination">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item"><a class="page-link" href="?{{ current_params }}&page=1"><i class="feather icon-chevrons-left"></i></a></li>
+                                <li class="page-item"><a class="page-link" href="?{{ current_params }}&page={{ page_obj.previous_page_number }}"><i class="feather icon-chevron-left"></i></a></li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link"><i class="feather icon-chevrons-left"></i></span></li>
+                                <li class="page-item disabled"><span class="page-link"><i class="feather icon-chevron-left"></i></span></li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item"><a class="page-link" href="?{{ current_params }}&page={{ num }}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item"><a class="page-link" href="?{{ current_params }}&page={{ page_obj.next_page_number }}"><i class="feather icon-chevron-right"></i></a></li>
+                                <li class="page-item"><a class="page-link" href="?{{ current_params }}&page={{ page_obj.paginator.num_pages }}"><i class="feather icon-chevrons-right"></i></a></li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link"><i class="feather icon-chevron-right"></i></span></li>
+                                <li class="page-item disabled"><span class="page-link"><i class="feather icon-chevrons-right"></i></span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="filterModel" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="filterModelLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="filterForm">
+                    {% for key, value in request.GET.items %} 
+                        {% if key == 'search' or key == 'per_page'%}
+                            <input type="hidden" name="{{ key }}" value="{{ value }}">
+                        {% endif %}
+                    {% endfor %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModelLabel">Apply Filters</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <label class="form-label d-block">Status</label>
+                            {% for value, label in status_choices %}
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" name="status[]" id="status_{{ value }}" value="{{ value }}" {% if value in selected_statuses %}checked{% endif %}>
+                                    <label class="form-check-label" for="status_{{ value }}">{{ label }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-12 mb-4">
+                            <label class="form-label d-block">Grade</label>
+                            {% for value, label in grade_choices %}
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" name="grade[]" id="grade_{{ value }}" value="{{ value }}" {% if value in selected_grades %}checked{% endif %}>
+                                    <label class="form-check-label" for="grade_{{ value }}">{{ label }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-12 mb-4">
+                            <label class="form-label m-r-15">Score: <span id="scoreLabel">1 : 100</span></label>
+                            <input id="scoreRange" name="scoreRange" type="text" class="slider p-" value="{{request.GET.scoreRange}}" data-slider-min="1" data-slider-max="100" data-slider-step="1" data-slider-value="[{{score_min}},{{score_max}}]"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    {% if current_params %}
+                        <button type="button" class="btn btn-warning" onclick="clearFilters()" data-bs-dismiss="modal"><i class="feather icon-filter ms-1"></i> Clean Filters </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extrastyle %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/css/bootstrap-slider.min.css">
+{% endblock extrastyle %}
+
+{% block extrajs %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/bootstrap-slider.min.js"></script>
+<script>
+    // Cooldown logic using localStorage to persist state across page reloads
+    const refreshBtn = document.getElementById('refreshBtn');
+    const refreshBtnText = document.getElementById('refreshBtnText');
+    const refreshCountdown = document.getElementById('refreshCountdown');
+    const cooldownKey = 'refreshCooldownUntil';
+    const cooldownSeconds = 30;
+
+    function setCooldown(seconds) {
+        if (refreshBtn) {
+            refreshBtn.classList.add('d-none');
+        }
+        refreshCountdown.classList.remove('d-none');
+        refreshCountdown.textContent = `Please wait ${seconds}s before refreshing again.`;
+    }
+    function clearCooldown() {
+        if (refreshBtn) {
+            refreshBtn.classList.remove('d-none');
+        }
+        refreshCountdown.classList.add('d-none');
+    }
+    function startCooldown(seconds) {
+        setCooldown(seconds);
+        const interval = setInterval(() => {
+            seconds--;
+            if (seconds > 0) {
+                refreshCountdown.textContent = `Please wait ${seconds}s before refreshing again.`;
+            } else {
+                clearInterval(interval);
+                clearCooldown();
+                localStorage.removeItem(cooldownKey);
+            }
+        }, 1000);
+    }
+
+    // On page load, check if cooldown is active
+    document.addEventListener('DOMContentLoaded', function() {
+        const cooldownUntil = localStorage.getItem(cooldownKey);
+        if (cooldownUntil) {
+            const now = Math.floor(Date.now() / 1000);
+            const secondsLeft = parseInt(cooldownUntil, 10) - now;
+            if (secondsLeft > 0) {
+                startCooldown(secondsLeft);
+            } else {
+                clearCooldown();
+            }
+        }
+    });
+
+    // On refresh button click, set cooldown in localStorage
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            const until = Math.floor(Date.now() / 1000) + cooldownSeconds;
+            localStorage.setItem(cooldownKey, until);
+        });
+    }
+    function clearFilters() {
+        const url = new URL(window.location.href);
+        const params = url.searchParams;
+        const path = window.location.pathname;
+        const page = params.get('page');
+        window.location.href = path + (page ? `?page=${page}` : '');
+    }
+    $(document).ready(function () {
+        $("#scoreRange").slider();
+    });
+</script>
+{% endblock extrajs %}

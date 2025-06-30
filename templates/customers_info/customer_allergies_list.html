@@ -1,0 +1,109 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Customer Product Allergens{% endblock title %}
+
+{% block content %}
+<div class="pc-container">
+    <div class="page-header">
+        <div class="page-block">
+            <div class="row align-items-center">
+                <div class="col-sm-8">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">Customer Product Allergens</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'index' %}"><i class="feather icon-home"></i></a></li>
+                        <li class="breadcrumb-item active"><a href="{% url 'customer_allergies_lists' %}">Product Allergens</a></li>
+                    </ul>
+                </div>
+                <div class="col-sm-4 text-end">
+                    <a href="{% url 'product_problem_report' %}" class="btn btn-link">
+                        <i class="feather icon-arrow-up-right"></i> View Customer Product Problem
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <form method="get" class="position-relative w-100">
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <div class="position-relative">
+                            <i class="feather icon-search position-absolute" style="left: 10px; top: 50%; transform: translateY(-50%); z-index: 2;"></i>
+                            <input type="text" class="form-control ps-5" id="search" name="search" value="{{ request.GET.search }}" placeholder="Search by name or email">
+                        </div>
+                    </div>
+                    <div class="col-auto ms-auto text-md-end">
+                        <select name="per_page" class="form-select" onchange="this.form.submit()" title="Records per page">
+                            <option value="10" {% if request.GET.per_page == '10' %}selected{% endif %}>10</option>
+                            <option value="25" {% if request.GET.per_page == '25' %}selected{% endif %}>25</option>
+                            <option value="50" {% if request.GET.per_page == '50' %}selected{% endif %}>50</option>
+                            <option value="100" {% if request.GET.per_page == '100' %}selected{% endif %}>100</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="card-body border-top pro-wrk-edit collapse show">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Allergies</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in allergies_data %}
+                            <tr>
+                                <td>{{ row.customer_name }}</td>
+                                <td>{{ row.allergy_value }}</td>
+                                <td>{{ row.created_at|date:"d-m-Y" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="6" class="text-center">No data found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if page_obj.object_list %}
+                    <div class="col-sm-12">
+                        <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }}.</span>
+                    </div>
+                {% endif %}
+                {% if page_obj.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-3">
+                        <ul class="pagination">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item"><a class="page-link" href="?{{ current_params }}&page=1"><i class="feather icon-chevrons-left"></i></a></li>
+                                <li class="page-item"><a class="page-link" href="?{{ current_params }}&page={{ page_obj.previous_page_number }}"><i class="feather icon-chevron-left"></i></a></li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link"><i class="feather icon-chevrons-left"></i></span></li>
+                                <li class="page-item disabled"><span class="page-link"><i class="feather icon-chevron-left"></i></span></li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item"><a class="page-link" href="?{{ current_params }}&page={{ num }}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item"><a class="page-link" href="?{{ current_params }}&page={{ page_obj.next_page_number }}"><i class="feather icon-chevron-right"></i></a></li>
+                                <li class="page-item"><a class="page-link" href="?{{ current_params }}&page={{ page_obj.paginator.num_pages }}"><i class="feather icon-chevrons-right"></i></a></li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link"><i class="feather icon-chevron-right"></i></span></li>
+                                <li class="page-item disabled"><span class="page-link"><i class="feather icon-chevrons-right"></i></span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

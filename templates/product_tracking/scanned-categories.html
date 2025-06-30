@@ -1,0 +1,36 @@
+{% extends "layouts/details_base.html" %}
+{% load static %}
+
+{% block title %}Scanned Categories{% endblock title %}
+
+{% block content_table %}
+<table class="table table-hover border-top">
+    <thead>
+        <tr>
+            <th>Category</th>
+            <th>
+                <a href="?order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}&{{query_sort_oder}}">
+                    Scan Count
+                    {% if request.GET.order == 'asc' %}▲{% else %}▼{% endif %}
+                </a>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for category in page_obj %}
+            <tr>
+                <td>
+                    <a href="{% url 'child_category_detail' category.parent.id %}">
+                        {{ category.parent.name }}
+                    </a>
+                </td>
+                <td>{{ category.parent.scan_count }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="2">No categories found.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock content_table %}

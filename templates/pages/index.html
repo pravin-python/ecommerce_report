@@ -1,0 +1,168 @@
+{% extends 'layouts/base.html' %}
+{% block title %} Dashboard {% endblock title %}
+{% load static %}
+{% load page %}
+{% block content %}
+
+<!-- [ Main Content ] start -->
+<div class="row">
+    <div class="col-md-6 col-xl-3">
+        <div class="card bg-c-blue order-card">
+            <div class="card-body">
+                <h6 class="text-white">Products Received</h6>
+                <h2 class="text-end text-white"><i class="fas fa-cubes float-start"></i></i><span>{{total_products}}</span></h2>
+                <p class="m-b-0">Enabled products<span class="float-end">{{enabled_products_count}}</span></p>
+                <p class="m-b-0">Exempted products<span class="float-end">{{exempted_products_count}}</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card bg-c-green order-card">
+            <div class="card-body">
+                <h6 class="text-white">Total Customer</h6>
+                <h2 class="text-end text-white"><i class="feather icon-user-plus float-start"></i><span>{{total_customers}}</span>
+                </h2>
+                <p class="m-b-0">Registered Customers<span class="float-end">{{enabled_customers_count}}</span></p>
+                <p class="m-b-0">Guest Customers<span class="float-end">{{guest_customers_count}}</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card bg-c-yellow order-card">
+            <div class="card-body">
+                <h6 class="text-white">This Month scan products</h6>
+                <h2 class="text-end text-white"><i class="feather icon-camera float-start"></i><span>{{month_customers}}</span></h2>
+                <p class="m-b-0">Today<span class="float-end">{{today_customers}}</span></p>
+                <p class="m-b-0">Yesterday<span class="float-end">{{yesterday_customers}}</span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card bg-c-red order-card">
+            <div class="card-body">
+                <h6 class="text-white">Total Profit</h6>
+                <h2 class="text-end text-white"><i
+                        class="feather icon-award float-start"></i><span>999,99</span></h2>
+                <p class="m-b-0">This Month<span class="float-end">$542</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12 col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Products Status Chart</h5>
+                <div>
+                    <button id="remove" class="btn btn-danger btn-sm m-r-5"
+                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Highest Value Remove">Remove</button>
+                    <button id="reset" class="btn btn-secondary btn-sm">Reset</button>
+                </div>
+            </div>
+            <div class="card-body text-center">
+                <div id="product-status-chart"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-12 col-md-6">
+        <div class="card">
+            <div class="card-header"><h5>Products Grade chart</h5></div>
+            <div class="card-body text-center"><div id="product-grade-chart"></div></div>
+        </div>
+    </div>
+</div>
+<!-- order-card end -->
+
+<div class="row" id="sortable-card-container">
+    {% for component in dashboard_components %}
+        {% if component.is_chart %}
+            <div class="col-sm-12 col-md-6 mb-4 chart-card" 
+                data-id="{{component.name}}" 
+                data-url="{{component.ajax_url}}" 
+                data-type="{{component.chart_type}}" 
+                data-title="{{ context|get_item:component.name }}">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <a href="{{ request.scheme }}://{{ request.get_host }}{{component.page_url}}" class="mb-0 text-primary">
+                            <h5 class="mb-0 text-purple">{{ context|get_item:component.name }}</h5>
+                        </a>
+                        <i class="feather icon-move drag-handle" style="cursor: move;"></i>
+                    </div>
+
+                    <div class="card-body text-center">
+                        {% if component.is_fillter %}
+                            <div class="mb-3 d-flex justify-content-center gap-2 flex-wrap">
+                                {% for key, label in component.fillter_value.filter_button.items %}
+                                    <button class="btn btn-outline-primary filter-btn"
+                                            data-filter="{{ key }}"
+                                            data-target="{{ component.name }}" >
+                                        {{ label }}
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <!-- <div class="loader-container" id="loader-{{component.name}}">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div> -->
+                        <div id="{{component.name}}"></div>
+                    </div>
+                </div>
+            </div>
+        {% elif component.is_table %}
+            <div class="col-sm-12 col-md-6 mb-4 table-card"
+                data-id="{{ component.name }}"
+                data-url="{{ component.ajax_url }}"
+                data-title="{{ context|get_item:component.name }}">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <a href="{{ request.scheme }}://{{ request.get_host }}{{component.page_url}}" class="mb-0">
+                            <h5 class="mb-0 text-purple">{{ context|get_item:component.name }}</h5>
+                        </a>
+                        <i class="feather icon-move drag-handle" style="cursor: move;"></i>
+                    </div>
+                    <div class="card-body text-center p-2">
+                        {% if component.is_fillter %}
+                            <div class="mb-3 d-flex justify-content-center gap-2 flex-wrap">
+                                {% for key, label in component.fillter_value.filter_button.items %}
+                                    <button class="btn btn-outline-primary  filter-btn"
+                                            data-filter="{{ key }}"
+                                            data-target="{{ component.name }}" >
+                                        {{ label }}
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="loader-container" id="loader-{{component.name}}">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="table-responsive" style="max-height: 400px; overflow: auto;">
+                            <table class="table table-hover text-start" id="{{ component.name }}">
+                                <thead class="sticky-top">
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor%}
+</div>
+<!-- [ Main Content ] end -->
+{% endblock content %}
+
+
+
+
+{% block extrajs %}
+<!-- Apex Chart -->
+<script src="{% static 'assets/js/plugins/apexcharts.min.js' %}"></script>
+<script src="{% static 'assets/js/plugins/Sortable.min.js' %}"></script>
+<script src="{% static 'assets/js/pages/dashboard-main.js' %}"></script>
+
+{% endblock extrajs %}

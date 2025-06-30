@@ -1,0 +1,389 @@
+{% extends "layouts/details_base.html" %}
+{% load static %}
+{% load page %}
+
+{% block extrastyle %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/css/bootstrap-slider.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" rel="stylesheet">
+{% endblock extrastyle %}
+
+{% block title %}Customer{% endblock title %}
+
+{% block cart_header %}
+    <div class="col-sm-12">
+        <div class="row">
+            <div class="col-sm-4">
+                <div class="card bg-c-yellow order-card">
+                    <div class="card-body">
+                        <h6 class="text-white">Registered Users</h6>
+                        <h2 class="text-end text-white"><i class="feather icon-user float-start"></i><span id="total-registered">{{ registered_users }}</span></h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="card bg-c-red order-card">
+                    <div class="card-body">
+                        <h6 class="text-white">Guest Users</h6>
+                        <h2 class="text-end text-white"><i class="feather icon-users float-start"></i><span id="total-guest">{{ guest_users }}</span></h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="card bg-c-blue order-card">
+                    <div class="card-body">
+                        <h6 class="text-white">Total Users</h6>
+                        <h2 class="text-end text-white"><i class="feather icon-user-check float-start"></i><span id="total-users">{{ total_users }}</span></h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock cart_header %}
+
+{% block extra_header_content %}
+    <!-- Filters Button -->
+    <div class="col-auto m-2px">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModel">
+            <i class="feather icon-filter me-1"></i>Filters
+        </button>
+    </div>
+
+    <div class="col-auto m-2px">
+        <button type="button" class="btn btn-success"  data-bs-toggle="modal" data-bs-target="#chartModalToggle">
+            <i class="feather icon-bar-chart-2 me-1"></i>Chart
+        </button>
+    </div>
+{% endblock extra_header_content %}
+
+
+{% block content_table %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Mobile</th>
+                <th scope="col">Email</th>
+                <th scope="col">Diet</th>
+                <th scope="col">Is Notification</th>
+                <th scope="col">Referred By</th>
+                <th scope="col">Created At</th>
+            </tr>
+        </thead>
+        <tbody class="table-group-divider">
+            {% for customer in page_obj %}
+            <tr>
+                <td>{{ customer.name|default:"Guest User" }}</td>
+                <td>{{ customer.mobile|default:"-" }}</td>
+                <td>{{ customer.email|default:"-" }}</td>
+                <td>{{ customer.get_diet_display|default:"-" }}</td>
+                <td>{{ customer.is_notification|default:"-" }}</td>
+                <td>{{ customer.referred_by }}</td>
+                <td>{{ customer.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock content_table %}
+           
+
+
+
+{% block model_content %}
+<div id="filterModel" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="filterModelLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="filterForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModelLabel">Apply Filters</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <label class="form-label">Date Range</label>
+                           <div class="input-daterange input-group" id="datepicker_range">
+                                <input type="text" class="form-control" name="from_date" placeholder="Start date" value="{{ request.GET.from_date }}">
+                                <span class="input-group-text">to</span>
+                                <input type="text" class="form-control" name="to_date" placeholder="End date" value="{{ request.GET.to_date }}">
+                            </div>
+                        </div>
+                        <div class="col-md-12 mb-4">
+                            <label for="is_guest">User Type:</label>
+                            <select class="form-control" id="is_guest" name="is_guest">
+                                <option value="">All Users</option>
+                                <option value="true" {% if is_guest_filter == 'true' %}selected{% endif %}>Guest Users</option>
+                                <option value="false" {% if is_guest_filter == 'false' %}selected{% endif %}>Registered Users</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 mb-4">
+                            <label for="by_diet">Diet Type:</label>
+                            <select class="form-control" id="by_diet" name="by_diet">
+                                <option value="">All Diets</option>
+                                {% for code, label in diet_choices %}
+                                    <option value="{{ code }}" {% if diet_filter == code %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    {% query_string request as params_string %}
+                    {% if params_string %}
+                        <button type="button" class="btn btn-secondary" onclick="clearFilters()">
+                            <i class="feather icon-filter ms-1"></i> Clean Filters
+                        </button>
+                    {% endif %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="chartModalToggle" aria-hidden="true" aria-labelledby="chartModalToggleLabel" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="chartModalToggleLabel">Customer Chart</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="container-fluid">
+          <div class="row justify-content-center">
+            <div class="col-12">
+              <div class="card shadow-sm border-0">
+                <div class="card-body">
+                  
+                  <!-- Filter Buttons -->
+                  <div class="d-flex justify-content-center gap-2 mb-4">
+                    <button class="btn btn-outline-success active" onclick="changeFilter('daily')" name="daily">Daily</button>
+                    <button class="btn btn-outline-success" onclick="changeFilter('week')" >Weekly</button>
+                    <button class="btn btn-outline-success" onclick="changeFilter('month')">Monthly</button>
+                    <button class="btn btn-outline-success" onclick="changeFilter('year')">Yearly</button>
+                  </div>
+
+                  <!-- Chart Area -->
+                  <div id="customers-scan-product" style="min-height: 350px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock model_content %}
+
+
+
+<!-- javascript block start -->
+{% block extrajs %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<script>
+    let chartInstance = null;
+
+    function fetchChartDataAndRender(filter = 'daily') {
+        return fetch(`{{ request.scheme }}://{{ request.get_host }}/api/customers/chart/?filter=${filter}`)
+            .then(response => response.json())
+            .then(json => {
+                renderChart(json);
+                return json;
+            })
+            .catch(error => {
+                console.error("Error fetching chart data:", error);
+            });
+    }
+
+    function toTitleCase(str) {
+        return str
+            .replace(/_/g, ' ') // replace underscores with spaces
+            .replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+    }
+    function renderChart(json) {
+        const categories = json.map(entry => entry.label);  // x-axis labels
+        const keys = Object.keys(json[0]).filter(key => key !== 'label');
+        const totals = {};
+        keys.forEach(key => {
+            totals[key] = json.reduce((sum, entry) => sum + (entry[key] || 0), 0);
+        });
+        const series = keys.map(key => ({
+            name: toTitleCase(key), 
+            data: json.map(entry => entry[key] || 0)
+        }));
+
+        const options = {
+            chart: {
+                type: 'bar',
+                height: 500,
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: false,
+                        zoom: false,
+                        zoomin: false,
+                        zoomout: false,
+                        pan: false,
+                        reset: false,
+                    },
+                    autoSelected: "zoom"
+                },
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800,
+                },
+            },
+            stroke: { curve: "smooth" },
+            dataLabels: {
+                enabled: true,
+                style: {
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    colors: ['#000']
+                },
+                background: {
+                    enabled: true,
+                    borderRadius: 2,
+                    padding: 4,
+                    opacity: 0.7,
+                }
+            },
+            tooltip: {
+                enabled: true,
+                shared: true,
+                intersect: false,
+                custom: function({ series, dataPointIndex, w }) {
+                    let label = w.globals.categoryLabels.length ? w.globals.categoryLabels[dataPointIndex]: w.globals.labels[dataPointIndex];
+
+                    let total = 0;  
+
+                    const tooltipSeries = w.config.series.map((s, idx) => {
+                        const value = s.data[dataPointIndex] || 0;
+                        total += value;
+
+                        return `
+                            <div class="apexcharts-tooltip-series-group apexcharts-tooltip-series-group-${idx} apexcharts-active" style="order: ${idx + 1}; display: flex;">
+                                <span class="apexcharts-tooltip-marker" shape="circle" style="color: ${w.config.colors[idx]};"></span>
+                                <div class="apexcharts-tooltip-text">
+                                    <div class="apexcharts-tooltip-y-group">
+                                        <span class="apexcharts-tooltip-text-y-label">${s.name}: </span>
+                                        <span class="apexcharts-tooltip-text-y-value">${value}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join("");
+
+                    const totalRow = `
+                        <div class="apexcharts-tooltip-series-group apexcharts-active" style="order: 999; display: flex; border-top: 1px solid #ddd; margin-top: 4px; padding-top: 4px;">
+                            <span class="apexcharts-tooltip-marker" style="color: #000;"></span>
+                            <div class="apexcharts-tooltip-text">
+                                <div class="apexcharts-tooltip-y-group">
+                                    <span class="apexcharts-tooltip-text-y-label"><strong>Total:</strong> </span>
+                                    <span class="apexcharts-tooltip-text-y-value"><strong>${total}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    return `
+                        <div class="apexcharts-tooltip-title">${label}</div>
+                        ${tooltipSeries}
+                        ${totalRow}
+                    `;
+                }
+            },
+            series: series,
+            xaxis: {categories: categories},
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '75%',
+                    dataLabels: {
+                        position: 'top'
+                    }
+                }
+            },
+            colors: ['#00BCD4', '#FF9800', '#c1ae02', '#db7600', '#f42500'],
+            annotations: {
+                position: 'front',
+                texts: [
+                    {
+                        x: 10,
+                        y: 10,
+                        text: keys.map(key => `${toTitleCase(key)}: ${totals[key]}`).join(" | "),
+                        textAnchor: 'start',
+                        foreColor: '#6c757d',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        backgroundColor: '#ffffff',
+                        borderColor: '#dddddd',
+                        borderRadius: 4,
+                        borderWidth: 1,
+                        padding: {
+                            left: 10,
+                            right: 10,
+                            top: 5,
+                            bottom: 5
+                        }
+                    }
+                ]
+            }
+            
+        };
+
+        const chartContainer = document.querySelector("#customers-scan-product");
+
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        chartInstance = new ApexCharts(chartContainer, options);
+        chartInstance.render();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const modal = document.getElementById('chartModalToggle');
+        let data = null
+        modal.addEventListener('shown.bs.modal', () => {
+            if(!data){
+                data = fetchChartDataAndRender(); 
+            }
+        });
+    });
+
+    function changeFilter(filter) {
+        fetchChartDataAndRender(filter);
+        const buttons = document.querySelectorAll(".btn-outline-success");
+        buttons.forEach(btn => btn.classList.remove("active"));
+
+        const clickedButton = [...buttons].find(btn => btn.getAttribute("onclick")?.includes(filter));
+        if (clickedButton) {
+            clickedButton.classList.add("active");
+        }
+    }
+
+</script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/bootstrap-slider.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $('#datepicker_range').datepicker({
+            format: "yyyy-mm-dd",
+            autoclose: true,
+            todayHighlight: true
+        });
+        
+    });
+</script>
+
+{% endblock extrajs %}
