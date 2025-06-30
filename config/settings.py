@@ -116,10 +116,10 @@ DATABASES = {
 
     "main": {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'fs_laravel_duplicate',
-        'USER': 'fs_python',
-        'PASSWORD': 'nH-Zr3Ge',
-        'HOST':'139.59.1.56',
+        'NAME': 'report_db',
+        'USER': 'root',
+        'PASSWORD': 'admin@123',
+        'HOST':'localhost',
         'PORT':'3306',
     }
 }
